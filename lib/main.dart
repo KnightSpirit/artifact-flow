@@ -48,7 +48,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   // List<Map<String, dynamic>> cards;
-  List cards = [];
+  List cards = [], filteredCards = [];
 
   void _incrementCounter() {
     setState(() {
@@ -73,11 +73,21 @@ class _MyHomePageState extends State<MyHomePage> {
 
     var res = await http.get(
         'https://media.st.dl.bscstorage.net/apps/583950/resource/card_set_0.539E6544DC1F6BA280550CE79EEE287F5052498F.json');
-
     setState(() {
-      // print(json.decode(res.body)['card_set']['card_list']);
       cards = json.decode(res.body)['card_set']['card_list'];
+      filteredCards = cards;
       print(cards);
+    });
+  }
+
+  searchCardByKeyWord(keyword) {
+    setState(() {
+      filteredCards = cards;
+      List newCards = filteredCards.where((c) {
+        print(c);
+        return (c['card_name']['english'].toString().indexOf(keyword)) >= 0;
+      }).toList();
+      filteredCards = newCards;
     });
   }
 
@@ -88,18 +98,29 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
         backgroundColor: Colors.black54,
       ),
-      body: GridView.builder(
-        itemCount: 12,
-        itemBuilder: (context, index) {
-          var url = cards[index]['large_image']['default'];
-          if (url == null) {
-            return null;
-          } else {
-            return Image.network(url);
-          }
-        },
-        gridDelegate:
-            SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+      body: Column(
+        children: <Widget>[
+          TextField(
+            decoration: InputDecoration(
+                border: InputBorder.none, hintText: "请输入你想查找的卡片"),
+            onChanged: searchCardByKeyWord,
+          ),
+          Flexible(
+            child: GridView.builder(
+              itemCount: 12,
+              itemBuilder: (context, index) {
+                var url = filteredCards[index]['large_image']['default'];
+                if (url == null) {
+                  return null;
+                } else {
+                  return Image.network(url);
+                }
+              },
+              gridDelegate:
+                  SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2),
+            ),
+          )
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
